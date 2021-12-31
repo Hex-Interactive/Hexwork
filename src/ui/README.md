@@ -1,0 +1,2 @@
+# UI
+A module responsible for handling initialization of prebuilt GUIs. GUIs should be parented to a folder named "StarterGui" in ReplicatedStorage. It is a best practice to spread your GUIs throughout multiple screen guis and use the `UI:GetUI()` function to retrieve them throughout your centralized UI code.
