@@ -1,7 +1,7 @@
-# Cooldown: a simple solution
+# Cooldown
 Cooldown is my personal way of managing cooldowns of any type. It avoids using wait or any sort of yielding to provide performant results. On top of that, it uses a key based system for managing individual cooldowns under the main Cooldown class.
 
-# Example
+## Example
 
 This is an example of how to utilize Cooldown:
 ```lua
