@@ -1,5 +1,5 @@
 # Cooldown
-Cooldown is my personal way of managing cooldowns of any type. It avoids using wait or any sort of yielding to provide performant results. On top of that, it uses a key based system for managing individual cooldowns under the main Cooldown class.
+A module designed to manage cooldowns of any type. It uses a key based system for managing individual cooldowns under a given Cooldown object. Calculations to determine if a cooldown is active are only done when you actually need to check if a key is on a cooldown. Using `wait()` or yielding is avoided to provide performant results.
 
 ## Example
 
@@ -28,8 +28,6 @@ This will print "Activated!" whenever you touch "part" only every 5 seconds.
 
 # Documentation
 
-This is the detailed code documentation for Cooldown.
-
 ## Global Methods
 
 ```lua
@@ -50,8 +48,6 @@ Creates and returns a new Cooldown object.
 | Name | Type | Description |
 | --- | --- | --- |
 | Cooldown | table | A new Cooldown object. |
-
----
 
 ## Cooldown Object
 
