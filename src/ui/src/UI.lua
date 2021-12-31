@@ -16,10 +16,7 @@ function UI:OnLoad(callback)
 end
 
 function UI:GetGUI(name)
-	if not loaded then
-		self:Init()
-	end
-
+	assert(guis[name], "Bad GUI name or not initialized")
 	return guis[name]
 end
 
@@ -27,25 +24,25 @@ function UI:Init()
 	local starterGui = ReplicatedStorage:WaitForChild("StarterGui")
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-	loaded = true
-
 	-- Load all the UIs
 	for i, instance in ipairs(starterGui:GetChildren()) do
-		guis[instance.Name] = instance
+		if instance:IsA("ScreenGui") then
+			assert(guis[instance.Name] == nil, "Duplicate GUI name")
 
-		instance.ResetOnSpawn = false
-		instance.Parent = playerGui
+			guis[instance.Name] = instance
+			instance.ResetOnSpawn = false
+			instance.Parent = playerGui
+		end
 	end
 
 	starterGui:Destroy()
 
 	-- Handle callbacks
-	for i, callback in ipairs(callbacks) do
-		task.spawn(callback)
-	end
+	loaded = true
 
-	for index in ipairs(callbacks) do
-		callbacks[index] = nil
+	for i = #callbacks, 1, -1 do
+		task.spawn(callbacks[i])
+		table.remove(callbacks, i)
 	end
 end
 
