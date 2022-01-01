@@ -1,23 +1,41 @@
 local RunService = game:GetService("RunService")
 
 local Cleanup = {}
+
+local cleanupConnection
 local debris = {}
 
-RunService.Stepped:Connect(function()
+local function checkDebris()
 	local now = os.clock()
 
 	for instance, timeout in pairs(debris) do
 		if now > timeout then
-			pcall(function()
+			-- Remove the instance
+			if instance and instance.Parent then
 				instance:Destroy()
-			end)
+			end
 
 			debris[instance] = nil
+
+			-- Cleanup connection if no debris
+			if next(debris) == nil then
+				cleanupConnection:Disconnect()
+				cleanupConnection = nil
+			end
 		end
 	end
-end)
+end
 
-function Cleanup:Schedule(instance, timeout)
+function Cleanup:ScheduleInstance(instance, timeout)
+	assert(typeof(instance) == "Instance", "Bad instance")
+	assert(typeof(timeout) == "number", "Bad timeout")
+
+	-- Setup connection if not already
+	if not cleanupConnection then
+		RunService.Stepped:Connect(checkDebris)
+	end
+
+	-- Add instance
 	debris[instance] = os.clock() + timeout
 end
 
