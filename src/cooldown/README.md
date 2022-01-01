@@ -1,12 +1,16 @@
 # Cooldown
-A module designed to manage cooldowns of any type. It uses a key based system for managing individual cooldowns under a given Cooldown object. Calculations to determine if a cooldown is active are only done when you actually need to check if a key is on a cooldown. Using `wait()` or yielding is avoided to provide performant results.
+A module designed to manage singular or groups of cooldowns. It uses a key based system for managing individual cooldowns under a given BaseCooldown object. Calculations to determine if a cooldown is active are only done when you actually need to check if a key is on a cooldown. Using `wait()` or yielding is avoided to provide performant results.
+
+**Important:** If you plan to only use one cooldown (a single BaseCooldown object), then there is no need to require the Cooldown module, only the BaseCooldown child module to directly use instead. However, it's still possible to use the main Cooldown module with only one BaseCooldown ever used. See the example code for this.
 
 ## Example
 
 This is an example of how to utilize Cooldown:
 ```lua
 local Players = game:GetService("Players")
-local cooldown = Cooldown.new(5) -- Create a new cooldown of 5 seconds
+local Cooldown = require(path.to.Cooldown)
+
+local partCooldown = Cooldown:Add("PartCooldown", 5) -- Create a new cooldown of 5 seconds
 
 part.Touched:Connect(function(hit)
 	local player = Players:GetPlayerFromCharacter(hit.Parent)
@@ -14,12 +18,12 @@ part.Touched:Connect(function(hit)
 		return
 	end
 	
-	cooldown:DoTask(player, function(onCooldown, timeLeft)
-		if onCooldown then
+	partCooldown:DoTask(player, function(canActivate, timeLeft)
+		if canActivate then
+			print("Activated!")
+		else
 			timeLeft = math.floor(timeLeft * 10) / 10 -- Format the time
 			print("There are", timeLeft, "second(s) left!")
-		else
-			print("Activated!")
 		end
 	end)
 end)
@@ -31,28 +35,71 @@ This will print "Activated!" whenever you touch "part" only every 5 seconds.
 ## Global Methods
 
 ```lua
-Cooldown.new()
+Cooldown:Add()
 ```
 
 **Description** <div>
-Creates and returns a new Cooldown object.
+Creates a new BaseCooldown object to add to this Cooldown and returns it. Will error in the case of duplicate names.
 
 **Parameters**
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| length | number | 1 | The length in seconds for this Cooldown object. |
+| name | string | | The name for this BaseCooldown object in this Cooldown object. |
+| length | number | | The length in seconds for the BaseCooldown object. |
 
 **Returns**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| Cooldown | table | A new Cooldown object. |
+| BaseCooldown | table | The BaseCooldown object created. |
 
-## Cooldown Object
+---
 
 ```lua
-Cooldown:DoTask()
+Cooldown:Get()
+```
+
+**Description** <div>
+Returns a stored BaseCooldown object by name. Will error if no BaseCooldown by the given name exists.
+
+**Parameters**
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| name | string | | The name for the requested BaseCooldown object. |
+
+**Returns**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| BaseCooldown | table | The BaseCooldown object requested. |
+
+## BaseCooldown Methods
+
+```lua
+BaseCooldown.new()
+```
+
+**Description** <div>
+Creates and returns a new BaseCooldown object.
+
+**Parameters**
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| length | number | | The length in seconds for this BaseCooldown object. |
+
+**Returns**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| BaseCooldown | table | A new BaseCooldown object. |
+
+---
+
+```lua
+BaseCooldown:DoTask()
 ```
 
 **Description** <div>
@@ -62,20 +109,20 @@ Completes a task based off a cooldown.
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| key | any | | The key to use when managing a certain cooldown. |
-| callback | function | | The function called, also known as the task. See the below for the arguments of the callback. |
+| key | any | | The key to use. |
+| callback | function | | The task to complete. See the below for the arguments of the callback. |
 
 **Callback Arguments**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| onCooldown | bool | A boolean representing if the specified key is on cooldown or not. |
+| canActivate | bool | States whether the key is not on a cooldown. |
 | timeLeft | number | The amount of time in seconds the cooldown key has remaining. |
 
 ---
 
 ```lua
-Cooldown:GetStatus()
+BaseCooldown:GetStatus()
 ```
 
 **Description** <div>
@@ -91,14 +138,14 @@ Gets cooldown information about a certain key.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| onCooldown | bool | A boolean representing if the specified key is on cooldown or not. |
+| canActivate | bool | States whether the key is not on a cooldown. |
 | lastUsed | number | The tick when the cooldown was last successful. |
 
 ---
 
 ```lua
-Cooldown:Cleanup()
+BaseCooldown:Cleanup()
 ```
 
 **Description** <div>
-Cleans up any completed cooldowns. This is mostly useful for garbage collecting cooldowns where an instance would act as the key.
+Cleans up any completed cooldowns. This is mostly useful for garbage collecting cooldowns where an instance would act as the key. This is called internally at the end of a `BaseCooldown:DoTask()` call.
