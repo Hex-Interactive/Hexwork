@@ -39,4 +39,10 @@ function Cleanup:ScheduleInstance(instance, timeout)
 	debris[instance] = os.clock() + timeout
 end
 
+function Cleanup:DestroyTable(targetTable)
+	for index in pairs(targetTable) do
+		targetTable[index] = nil
+	end
+end
+
 return Cleanup
