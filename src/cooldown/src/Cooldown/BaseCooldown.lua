@@ -22,23 +22,23 @@ function BaseCooldown:GetStatus(key)
 	assert(key ~= nil, "Bad key")
 
 	local lastUsed = self.Data[key] or 0
-	local canDoTask = os.clock() - lastUsed > self.Length
+	local canActivate = os.clock() - lastUsed > self.Length
 
-	return canDoTask, lastUsed
+	return canActivate, lastUsed
 end
 
 function BaseCooldown:DoTask(key, callback)
 	assert(typeof(callback) == "function", "Bad callback")
 
 	local now = os.clock()
-	local canDoTask, lastUsed = self:GetStatus(key)
+	local canActivate, lastUsed = self:GetStatus(key)
 	local timeLeft = lastUsed + self.Length - now
 
-	if canDoTask then
+	if canActivate then
 		self.Data[key] = now
 	end
 
-	callback(canDoTask, timeLeft)
+	callback(canActivate, timeLeft)
 	self:Cleanup()
 end
 

@@ -7,6 +7,7 @@ function Cooldown:Add(name, ...)
 	assert(typeof(name) == "string", "Bad name")
 	assert(not cooldowns[name], "Duplicate name")
 	cooldowns[name] = BaseCooldown.new(...)
+	return cooldowns[name]
 end
 
 function Cooldown:Get(name)
