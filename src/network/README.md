@@ -1,6 +1,8 @@
 # Network
 A module designed to implement custom replication from the server to a client. Useful for sending instances to only one client. A RemoteEvent named "NetworkReplicator" is assumed to be a descendant of ReplcatedStorage.
 
+**Important:** Network was developed very quickly and the documentation is lackluster. A major refactor is in the works, but, for now, read the code comments to get a better idea of how the module works.
+
 # Documentation
 
 ## Global Methods
