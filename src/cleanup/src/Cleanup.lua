@@ -32,7 +32,7 @@ function Cleanup:ScheduleInstance(instance, timeout)
 
 	-- Setup connection if not already
 	if not cleanupConnection then
-		RunService.Stepped:Connect(checkDebris)
+		cleanupConnection = RunService.Stepped:Connect(checkDebris)
 	end
 
 	-- Add instance
