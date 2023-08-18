@@ -1,7 +1,11 @@
 # Cooldown
-A module designed to manage singular or groups of cooldowns. It uses a key based system for managing individual cooldowns under a given BaseCooldown object. Calculations to determine if a cooldown is active are only done when you actually need to check if a key is on a cooldown. Using `wait()` or yielding is avoided to provide performant results.
+Manages singular or groups of cooldowns. It uses a key based system for managing individual cooldowns under a given BaseCooldown object. Calculations to determine if a cooldown is active are only done when you actually need to check if a key is on a cooldown. Using `wait()` or yielding is avoided to provide performant results.
 
 **Important:** If you plan to only use one cooldown (a single BaseCooldown object), then there is no need to require the Cooldown module, only the BaseCooldown child module to directly use instead. However, it's still possible to use the main Cooldown module with only one BaseCooldown ever used. See the example code for this.
+
+## Refactor Notice
+
+This module is in need of refactoring and updates. At the moment, it is not recommended for new work.
 
 ## Example
 

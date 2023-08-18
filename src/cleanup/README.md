@@ -1,5 +1,9 @@
 # Cleanup
-A module to manage cleaning up data of all sorts. This is a good replacement for the [Debris](https://developer.roblox.com/en-us/api-reference/class/Debris) service with additional features.
+Handle cleaning up data of all sorts. This is a good replacement for the [Debris](https://developer.roblox.com/en-us/api-reference/class/Debris) service with additional features.
+
+## Refactor Notice
+
+This module is in need of refactoring and updates. At the moment, it is not recommended for new work.
 
 ## Example
 

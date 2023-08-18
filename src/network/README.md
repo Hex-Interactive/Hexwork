@@ -3,6 +3,10 @@ Implements custom replication of instances from the server to a single client. N
 
 Network takes advantage of the fact that server created instances parented to a given player's PlayerGui only replicate to that specific player. Using this "hack" with Roblox instance replication, decent custom replication behavior can be simulated. Ideally, new API would remove the need for this module.
 
+## Refactor Notice
+
+This module is in need of refactoring and updates. At the moment, it is not recommended for new work.
+
 ## Example
 
 TODO
