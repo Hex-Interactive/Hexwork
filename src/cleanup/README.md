@@ -27,7 +27,8 @@ Along with the output, you will see the created Part be destroyed after the time
 Cleanup:ScheduleInstance()
 ```
 
-**Description** <div>
+**Description**
+
 Schedules the destruction of an instance after a given time interval.
 
 **Parameters**
@@ -43,7 +44,8 @@ Schedules the destruction of an instance after a given time interval.
 Cleanup:DestroyTable()
 ```
 
-**Description** <div>
+**Description**
+
 Sets every index of the table to `nil` iterating with the `pairs()` iterator function. **IMPORTANT: Only use this if you have no intention of using the table again.** Otherwise, it is more efficent to call `table.clear()` with the table.
 
 **Parameters**

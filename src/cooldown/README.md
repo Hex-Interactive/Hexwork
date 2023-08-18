@@ -38,7 +38,8 @@ This will print "Activated!" whenever you touch "part" only every 5 seconds.
 Cooldown:Add()
 ```
 
-**Description** <div>
+**Description**
+
 Creates a new BaseCooldown object to add to this Cooldown and returns it. Will error in the case of duplicate names.
 
 **Parameters**
@@ -60,7 +61,8 @@ Creates a new BaseCooldown object to add to this Cooldown and returns it. Will e
 Cooldown:Get()
 ```
 
-**Description** <div>
+**Description**
+
 Returns a stored BaseCooldown object by name. Will error if no BaseCooldown by the given name exists.
 
 **Parameters**
@@ -81,7 +83,8 @@ Returns a stored BaseCooldown object by name. Will error if no BaseCooldown by t
 BaseCooldown.new()
 ```
 
-**Description** <div>
+**Description**
+
 Creates and returns a new BaseCooldown object.
 
 **Parameters**
@@ -102,7 +105,8 @@ Creates and returns a new BaseCooldown object.
 BaseCooldown:DoTask()
 ```
 
-**Description** <div>
+**Description**
+
 Completes a task based off a cooldown.
 
 **Parameters**
@@ -125,7 +129,8 @@ Completes a task based off a cooldown.
 BaseCooldown:GetStatus()
 ```
 
-**Description** <div>
+**Description**
+
 Gets cooldown information about a certain key.
 
 **Parameters**
@@ -147,5 +152,6 @@ Gets cooldown information about a certain key.
 BaseCooldown:Cleanup()
 ```
 
-**Description** <div>
+**Description**
+
 Cleans up any completed cooldowns. This is mostly useful for garbage collecting cooldowns where an instance would act as the key. This is called internally at the end of a `BaseCooldown:DoTask()` call.
