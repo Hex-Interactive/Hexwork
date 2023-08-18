@@ -24,7 +24,7 @@ function NetworkClient:Connect(callback)
 	end)
 
 	-- Find packets that have been replicated already
-	for i, instance in ipairs(playerGui:GetChildren()) do
+	for _, instance in ipairs(playerGui:GetChildren()) do
 		handlePacket(instance, callback)
 	end
 end

@@ -1,9 +1,10 @@
 # Network
-A module designed to implement custom replication of instances from the server to a single client. Network needs to be initialized on the server and connected on the client for it to function. When required on the server, Network has a different interface then on the client and vice versa.
+Implements custom replication of instances from the server to a single client. Network needs to be initialized on the server and connected on the client for it to function. When required on the server, Network has a different interface then on the client and vice versa.
 
 Network takes advantage of the fact that server created instances parented to a given player's PlayerGui only replicate to that specific player. Using this "hack" with Roblox instance replication, decent custom replication behavior can be simulated. Ideally, new API would remove the need for this module.
 
 ## Example
+
 TODO
 
 # Documentation
@@ -14,7 +15,8 @@ TODO
 Network:Init()
 ```
 
-**Description** <div>
+**Description**
+
 Initializes the Network server with the given config. Table contents must match the index of the default config to be applied. This is required to be executed in order for Network to run.
 
 Default config:
@@ -32,7 +34,8 @@ Default config:
 Network:Connect()
 ```
 
-**Description** <div>
+**Description**
+
 Connects the given function(s) to their matching event name. Names have to match a valid event name to be connected correctly.
 
 Events:
@@ -51,7 +54,8 @@ Events:
 Network:ReplicateInstance()
 ```
 
-**Description** <div>
+**Description**
+
 Replicates a copy of the given instance to the specified client.
 
 **Parameters**
@@ -68,7 +72,8 @@ Replicates a copy of the given instance to the specified client.
 Network:Connect()
 ```
 
-**Description** <div>
+**Description**
+
 Connects the callback to be fired when a packet is received. This is required to be executed in order for Network to run.
 
 **Parameters**
