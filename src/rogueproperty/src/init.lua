@@ -11,19 +11,21 @@ function RogueProperty.new(name: string, baseValue: Value, binding: ((name: stri
 	self._computedValue = baseValue
 	self._type = typeof(baseValue)
 	self._modifiers = {}
-	self._fuzzIndex = 0
 	self._min = nil
 	self._max = nil
 
 	local bindingType = typeof(binding)
 	if bindingType == "Instance" then
-		self._instance = binding
-		self:Recompute()
+		self._binding = function(propName: string, propValue: Value)
+			binding[propName] = propValue
+		end
 	elseif bindingType == "function" then
-		self._onChange = binding
-		self:Recompute()
+		self._binding = binding
+	else
+		error("unsupported binding type")
 	end
 
+	self:_recompute()
 	self.IsValid = true
 
 	return self
@@ -36,10 +38,10 @@ function RogueProperty:SetBounds(min: number?, max: number?)
 
 	self._min = min
 	self._max = max
-	self:Recompute()
+	self:_recompute()
 end
 
-function RogueProperty:Recompute()
+function RogueProperty:_recompute()
 	table.sort(self._modifiers, function(a, b)
 		return a[2] < b[2]
 	end)
@@ -58,12 +60,7 @@ function RogueProperty:Recompute()
 	end
 
 	self._computedValue = value
-
-	if self._instance then
-		self._instance[self._name] = value
-	elseif self._onChange then
-		self._onChange(self._name, value)
-	end
+	self._binding(self._name, value)
 end
 
 function RogueProperty:_addModifier(id: string, priority: number, map: (value: Value) -> Value)
@@ -74,12 +71,12 @@ function RogueProperty:_addModifier(id: string, priority: number, map: (value: V
 	end
 
 	table.insert(self._modifiers, { id, priority, map })
-	self:Recompute()
+	self:_recompute()
 end
 
 function RogueProperty:SetBaseValue(value: Value)
 	self._baseValue = value
-	self:Recompute()
+	self:_recompute()
 end
 
 function RogueProperty:GetBaseValue(): Value
@@ -116,7 +113,7 @@ function RogueProperty:RemoveModifier(id: string)
 	for index, modifier in self._modifiers do
 		if modifier[1] == id then
 			table.remove(self._modifiers, index)
-			self:Recompute()
+			self:_recompute()
 			return
 		end
 	end
@@ -127,14 +124,12 @@ function RogueProperty:ClearModifiers()
 		table.clear(modifier)
 	end
 	table.clear(self._modifiers)
-
-	self:Recompute()
+	self:_recompute()
 end
 
 function RogueProperty:Destroy()
 	self:ClearModifiers()
 	table.clear(self)
-
 	setmetatable(self, nil)
 end
 
