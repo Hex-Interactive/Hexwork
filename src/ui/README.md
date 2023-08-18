@@ -24,7 +24,8 @@ Note that you don't need any `WaitForChild` calls on any of the GUI children.
 UI.Get()
 ```
 
-**Description** <div>
+**Description**
+
 Returns a loaded ScreenGui by the given name. Will error if no loaded GUI by the given name is found.
 
 **Parameters**
@@ -45,5 +46,6 @@ Returns a loaded ScreenGui by the given name. Will error if no loaded GUI by the
 UI.Init()
 ```
 
-**Description** <div>
+**Description**
+
 Initializes and loads all of the GUIs in the "StarterGui" folder in ReplicatedStorage. The StarterGui folder is emptied and deleted after initialization. Will error if there is a duplicate name in the StarterGui folder. The `ResetOnSpawn` property is set to `false` when a GUI is loaded.
