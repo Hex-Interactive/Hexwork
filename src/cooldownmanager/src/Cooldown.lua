@@ -11,7 +11,7 @@ function Cooldown.new()
 end
 
 function Cooldown:Add(index: any, duration: number?)
-	assert(self._list[index], `cooldown index "{index}" already exists`)
+	assert(self._list[index] == nil, `cooldown index "{index}" already exists`)
 
 	local new = {
 		Registered = os.clock(),
