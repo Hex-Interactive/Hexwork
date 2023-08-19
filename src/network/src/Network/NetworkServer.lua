@@ -1,7 +1,7 @@
 local NetworkServer = {}
 
 local config = {
-	PacketTimeout = 10
+	PacketTimeout = 10,
 }
 
 local replicatorRemote
@@ -9,7 +9,7 @@ local replicating = {}
 local events = {}
 
 local function replErr(instanceName, playerName)
-	return "[Network]: Unable to replicate instance \"" .. instanceName .. "\" to player \"" .. playerName .. "\""
+	return '[Network]: Unable to replicate instance "' .. instanceName .. '" to player "' .. playerName .. '"'
 end
 
 local function fireEvent(name, ...)
@@ -101,7 +101,7 @@ function NetworkServer:Init(initConfig)
 		if config[index] ~= nil then
 			config[index] = value
 		else
-			warn("[Network]: Config \"" .. index .. "\" unknown")
+			warn('[Network]: Config "' .. index .. '" unknown')
 		end
 	end
 
