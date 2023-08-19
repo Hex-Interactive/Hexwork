@@ -6,7 +6,7 @@ local guis = {}
 local UI = {}
 
 function UI.Get(name: string): ScreenGui
-	assert(guis[name], "bad GUI name or not initialized")
+	assert(guis[name], `GUI "{name}" not initialized`)
 	return guis[name]
 end
 
@@ -16,9 +16,10 @@ function UI.Init()
 
 	for _, instance in starterGui:GetChildren() do
 		if instance:IsA("ScreenGui") then
-			assert(guis[instance.Name] == nil, "duplicate initialized GUI name")
+			local name = instance.Name
+			assert(guis[name] == nil, `GUI "{name}" already initialized`)
 
-			guis[instance.Name] = instance
+			guis[name] = instance
 			instance.ResetOnSpawn = false
 			instance.Parent = playerGui
 		end
