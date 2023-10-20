@@ -14,15 +14,18 @@ function RogueProperty.new(name: string, baseValue: Value, binding: ((name: stri
 	self._min = nil
 	self._max = nil
 
-	local bindingType = typeof(binding)
-	if bindingType == "Instance" then
-		self._binding = function(propName: string, propValue: Value)
-			binding[propName] = propValue
+	if binding ~= nil then
+		local bindingType = typeof(binding)
+
+		if bindingType == "Instance" then
+			self._binding = function(propName: string, propValue: Value)
+				binding[propName] = propValue
+			end
+		elseif bindingType == "function" then
+			self._binding = binding
+		else
+			error("unsupported binding type")
 		end
-	elseif bindingType == "function" then
-		self._binding = binding
-	else
-		error("unsupported binding type")
 	end
 
 	self:_recompute()
