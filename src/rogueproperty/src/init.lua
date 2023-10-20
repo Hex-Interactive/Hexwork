@@ -77,6 +77,18 @@ function RogueProperty:_addModifier(id: string, priority: number, map: (value: V
 	self:_recompute()
 end
 
+function RogueProperty:_removeModifier(id: string, callback: (() -> ())?)
+	for index, modifier in self._modifiers do
+		if modifier[1] == id then
+			table.remove(self._modifiers, index)
+			if callback then
+				callback()
+			end
+			return
+		end
+	end
+end
+
 function RogueProperty:SetBaseValue(value: Value)
 	self._baseValue = value
 	self:_recompute()
@@ -113,13 +125,13 @@ function RogueProperty:CreateOverrideModifier(id: string, value: Value, priority
 end
 
 function RogueProperty:RemoveModifier(id: string)
-	for index, modifier in self._modifiers do
-		if modifier[1] == id then
-			table.remove(self._modifiers, index)
-			self:_recompute()
-			return
-		end
-	end
+	self:_removeModifier(id, function()
+		self:_recompute()
+	end)
+end
+
+function RogueProperty:RemoveModifierClean(id: string)
+	self:_removeModifier(id)
 end
 
 function RogueProperty:ClearModifiers()
