@@ -2,8 +2,6 @@ type Vector = Vector2 | Vector3
 type VectorI16 = Vector2int16 | Vector3int16
 type Numerical = number | Vector | VectorI16 | CFrame
 
-local RNG = Random.new()
-
 local MathUtil = {
 	tau = math.pi * 2,
 }
@@ -13,14 +11,14 @@ function MathUtil.IsNaN(value: Numerical): boolean
 end
 
 function MathUtil.IsFinite(value: number): boolean
-	return MathUtil.FitsIntervalOpen(value, -math.huge, math.huge)
+	return value > -math.huge and value < math.huge
 end
 
-function MathUtil.FitsIntervalOpen(value: number, min: number, max: number): boolean
+function MathUtil.OnIntOpen(value: number, min: number, max: number): boolean
 	return value > min and value < max
 end
 
-function MathUtil.FitsIntervalClosed(value: number, min: number, max: number): boolean
+function MathUtil.OnIntClosed(value: number, min: number, max: number): boolean
 	return value >= min and value <= max
 end
 
@@ -28,12 +26,8 @@ function MathUtil.Flatten(value: number, min: number, max: number): number
 	return math.clamp(math.floor(value), min, max)
 end
 
-function MathUtil.UnitVectorSafe(vector: Vector): Vector
+function MathUtil.UnitVec(vector: Vector): Vector
 	return if vector.Magnitude > 0 then vector.Unit else vector
-end
-
-function MathUtil.Jitter(average: number, spread: number, randomValue: number?): number
-	return average - 0.5 * spread + (randomValue or RNG:NextNumber()) * spread
 end
 
 function MathUtil.Lerp(start: number, goal: number, alpha: number): number
