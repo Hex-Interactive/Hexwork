@@ -1,30 +1,29 @@
 local Cooldown = require(script:WaitForChild("Cooldown"))
 
-local cooldowns = {}
+local cache = {}
 
 local CooldownManager = {}
 
-function CooldownManager.Add(name: string): any
-	assert(cooldowns[name] == nil, `cooldown "{name}" already exists`)
-
+function CooldownManager.Add(name: string): Cooldown.Cooldown
+	assert(cache[name] == nil, `cooldown "{name}" already exists`)
 	local new = Cooldown.new()
-	cooldowns[name] = new
+	cache[name] = new
 	return new
 end
 
-function CooldownManager.Get(name: string): any
-	assert(cooldowns[name], `unknown "{name}" cooldown`)
-	return cooldowns[name]
+function CooldownManager.Get(name: string): Cooldown.Cooldown
+	assert(cache[name], `unknown "{name}" cooldown`)
+	return cache[name]
 end
 
 function CooldownManager.Cleanup()
-	for _, cooldown in cooldowns do
+	for _, cooldown in cache do
 		cooldown:Cleanup()
 	end
 end
 
 function CooldownManager.Clear()
-	for _, cooldown in cooldowns do
+	for _, cooldown in cache do
 		cooldown:Clear()
 	end
 end

@@ -1,72 +1,93 @@
 local MAX = 9999
 local NONE = 0
 
-local Cooldown = {}
+type Index = any
+type Entry = {
+	start: number,
+	dur: number?,
+	yield: boolean?
+}
+
+export type Cooldown = {
+	__index: Cooldown,
+	new: () -> Cooldown,
+
+	_list: {[Index]: Entry},
+
+	Add: (self: Cooldown, index: Index, duration: number?) -> (),
+	Update: (self: Cooldown, index: Index, duration: number?) -> (),
+	CanContinue: (self: Cooldown, index: Index) -> boolean,
+	GetTimeRemaining: (self: Cooldown, index: Index) -> number,
+	Cleanup: (self: Cooldown) -> (),
+	Clear: (self: Cooldown) -> (),
+}
+
+local Cooldown = {} :: Cooldown
 Cooldown.__index = Cooldown
 
-function Cooldown.new()
-	local self = setmetatable({}, Cooldown)
+function Cooldown.new(): Cooldown
+	local self = (setmetatable({}, Cooldown) :: any) :: Cooldown
 	self._list = {}
 	return self
 end
 
-function Cooldown:Add(index: any, duration: number?)
+function Cooldown:Add(index: Index, duration: number?)
 	assert(self._list[index] == nil, `cooldown index "{index}" already exists`)
 
 	local new = {
-		Registered = os.clock(),
+		start = os.clock(),
 	}
 
 	if duration then
-		new.Duration = duration
+		new.dur = duration
 	else
-		new.Yielding = true
+		new.yield = true
 	end
 
 	self._list[index] = new
 end
 
-function Cooldown:Update(index: any, duration: number?)
+function Cooldown:Update(index: Index, duration: number?)
 	local cooldown = self._list[index]
 	if not cooldown then
 		self:Add(index, duration)
 		return
 	end
 
-	cooldown.Registered = os.clock()
+	cooldown.start = os.clock()
 
 	if duration then
-		cooldown.Duration = duration
+		cooldown.dur = duration
 	else
-		cooldown.Yielding = true
+		cooldown.yield = true
 	end
 end
 
-function Cooldown:CanContinue(index: any): boolean
+function Cooldown:CanContinue(index: Index): boolean
 	local cooldown = self._list[index]
 
 	if not cooldown then
 		return true
 	end
 
-	if cooldown.Duration ~= nil then
-		return cooldown.Registered + cooldown.Duration <= os.clock()
-	elseif cooldown.Yielding ~= nil then
-		return not cooldown.Yielding
+	if cooldown.dur ~= nil then
+		return cooldown.start + cooldown.dur <= os.clock()
+	elseif cooldown.yield ~= nil then
+		return not cooldown.yield
 	end
 
 	return false
 end
 
-function Cooldown:GetTimeRemaining(index: any): number
+function Cooldown:GetTimeRemaining(index: Index): number
 	local cooldown = self._list[index]
 
 	if not cooldown then
 		return NONE
 	end
 
-	if cooldown.Duration then
-		return math.max(cooldown.Registered + cooldown.Duration - os.clock(), NONE)
+	if cooldown.dur then
+		return math.max(cooldown.start + cooldown.dur - os.clock(), NONE)
 	end
 
 	return MAX
