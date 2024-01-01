@@ -1,15 +1,11 @@
 # Network
 Implements custom replication of instances from the server to a single client. Network needs to be initialized on the server and connected on the client for it to function. When required on the server, Network has a different interface then on the client and vice versa.
 
-Network takes advantage of the fact that server created instances parented to a given player's PlayerGui only replicate to that specific player. Using this "hack" with Roblox instance replication, decent custom replication behavior can be simulated. Ideally, new API would remove the need for this module.
+Network takes advantage of the fact that server created instances parented to a given player's PlayerGui only replicate to that specific player. Using this "hack" with Roblox instance replication, decent custom replication behavior can be simulated. Ideally, new API would remove the need for this package.
 
-## Refactor Notice
+## ⚠️ Refactor Notice
 
-This module is in need of refactoring and updates. At the moment, it is not recommended for new work.
-
-## Example
-
-TODO
+This package is in need of refactoring and updates. At the moment, it is not recommended for new work, and is not available via Wally.
 
 # Documentation
 
