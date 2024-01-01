@@ -1,6 +1,6 @@
 # Hexwork
 
-Collection of modules used for development on Roblox.
+Collection of packages used for development on Roblox, available through [Wally](https://github.com/UpliftGames/wally).
 
 ## License
 
