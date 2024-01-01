@@ -1,4 +1,5 @@
 # Network
+
 Implements custom replication of instances from the server to a single client. Network needs to be initialized on the server and connected on the client for it to function. When required on the server, Network has a different interface then on the client and vice versa.
 
 Network takes advantage of the fact that server created instances parented to a given player's PlayerGui only replicate to that specific player. Using this "hack" with Roblox instance replication, decent custom replication behavior can be simulated. Ideally, new API would remove the need for this package.
