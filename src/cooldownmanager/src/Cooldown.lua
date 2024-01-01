@@ -5,14 +5,14 @@ type Index = any
 type Entry = {
 	start: number,
 	dur: number?,
-	yield: boolean?
+	yield: boolean?,
 }
 
 export type Cooldown = {
 	__index: Cooldown,
 	new: () -> Cooldown,
 
-	_list: {[Index]: Entry},
+	_list: { [Index]: Entry },
 
 	Add: (self: Cooldown, index: Index, duration: number?) -> (),
 	Update: (self: Cooldown, index: Index, duration: number?) -> (),

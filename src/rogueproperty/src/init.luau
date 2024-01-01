@@ -6,7 +6,7 @@ type Map = (value: Value) -> Value
 type Modifier = {
 	id: string,
 	pri: number,
-	map: Map
+	map: Map,
 }
 
 type RogueProperty = {
@@ -31,11 +31,11 @@ type RogueProperty = {
 	GetBaseValue: (self: RogueProperty) -> Value,
 	SetBaseValue: (self: RogueProperty, value: Value) -> (),
 	SetBounds: (self: RogueProperty, min: number?, max: number?) -> (),
-	CreateAdditiveModifier: (self: RogueProperty,id: string, amount: Value, priority: number?) -> (),
-	CreateMultiplierModifier: (self: RogueProperty,id: string, amount: Value, priority: number?) -> (),
-	CreateOverrideModifier: (self: RogueProperty,id: string, value: Value, priority: number?) -> (),
-	RemoveModifier: (self: RogueProperty,id: string) -> (),
-	RemoveModifierClean: (self: RogueProperty,id: string) -> (),
+	CreateAdditiveModifier: (self: RogueProperty, id: string, amount: Value, priority: number?) -> (),
+	CreateMultiplierModifier: (self: RogueProperty, id: string, amount: Value, priority: number?) -> (),
+	CreateOverrideModifier: (self: RogueProperty, id: string, value: Value, priority: number?) -> (),
+	RemoveModifier: (self: RogueProperty, id: string) -> (),
+	RemoveModifierClean: (self: RogueProperty, id: string) -> (),
 	ClearModifiers: (self: RogueProperty) -> (),
 }
 
@@ -104,7 +104,6 @@ function RogueProperty:_Recompute()
 	if self._binding then
 		self._binding(self._name, value)
 	end
-	
 end
 
 function RogueProperty:_AddModifier(id: string, priority: number, map: (value: Value) -> Value)
@@ -117,7 +116,7 @@ function RogueProperty:_AddModifier(id: string, priority: number, map: (value: V
 	table.insert(self._modifiers, {
 		id = id,
 		pri = priority,
-		map = map
+		map = map,
 	})
 
 	self:_Recompute()
