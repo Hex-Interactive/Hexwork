@@ -10,6 +10,10 @@ function MathUtil.IsNaN(value: Numerical): boolean
 	return value ~= value
 end
 
+function MathUtil.IsReal(value: number): boolean
+	return value * 0 == 0
+end
+
 function MathUtil.IsFinite(value: number): boolean
 	return value > -math.huge and value < math.huge
 end
