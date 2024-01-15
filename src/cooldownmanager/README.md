@@ -5,5 +5,5 @@ Implements a cooldown system and a way to manage one or more of them. It uses a 
 ## Installation
 
 ```
-CooldownManager = "hex-interactive/cooldownmanager@1.0.0"
+CooldownManager = "hex-interactive/cooldownmanager@1.0.1"
 ```
