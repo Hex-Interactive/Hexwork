@@ -5,5 +5,5 @@ Simple math utility library for numbers, vectors, and CFrames. Intended to exten
 ## Installation
 
 ```
-MathUtil = "hex-interactive/mathutil@1.1.0"
+MathUtil = "hex-interactive/mathutil@1.2.0"
 ```
