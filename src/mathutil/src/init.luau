@@ -18,6 +18,10 @@ function MathUtil.IsFinite(value: number): boolean
 	return value > -math.huge and value < math.huge
 end
 
+function MathUtil.IsValid(value: number): boolean
+	return MathUtil.IsReal(value) and MathUtil.IsFinite(value) and not MathUtil.IsNaN(value)
+end
+
 function MathUtil.OnIntOpen(value: number, min: number, max: number): boolean
 	return value > min and value < max
 end
