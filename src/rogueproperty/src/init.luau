@@ -102,13 +102,13 @@ function RogueProperty._AddModifier(self: Identity, id: string, priority: number
 	self:_Recompute()
 end
 
-function RogueProperty._RemoveModifier(self: Identity, id: string, callback: (() -> ())?)
+function RogueProperty._RemoveModifier(self: Identity, id: string, recompute: boolean?)
 	for index, modifier in self._modifiers do
 		if modifier.id == id then
 			table.remove(self._modifiers, index)
 
-			if callback then
-				callback()
+			if recompute then
+				self:_Recompute()
 			end
 
 			return
@@ -161,14 +161,8 @@ function RogueProperty.CreateOverrideModifier(self: Identity, id: string, value:
 	end)
 end
 
-function RogueProperty.RemoveModifier(self: Identity, id: string)
-	self:_RemoveModifier(id, function()
-		self:_Recompute()
-	end)
-end
-
-function RogueProperty.RemoveModifierClean(self: Identity, id: string)
-	self:_RemoveModifier(id)
+function RogueProperty.RemoveModifier(self: Identity, id: string, recompute: boolean?)
+	self:_RemoveModifier(id, recompute)
 end
 
 function RogueProperty.ClearModifiers(self: Identity)
