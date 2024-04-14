@@ -1,95 +1,98 @@
-export type Value = number | CFrame | Vector3
+type Binding<T> = (value: T) -> ()
+type Map<T> = (value: T) -> T
 
-type FunctionalBinding = (name: string, value: Value) -> ()
-type Binding = FunctionalBinding | Instance
-type Map = (value: Value) -> Value
-type Modifier = {
+type Modifier<T> = {
 	id: string,
 	pri: number,
-	map: Map,
+	map: Map<T>,
+}
+
+type Config<T> = {
+	binding: Binding<T>?,
+	processor: Map<T>?,
+	min: number?,
+	max: number?,
 }
 
 local RogueProperty = {}
 local metatable = { __index = RogueProperty }
-export type Identity = typeof(setmetatable(
+export type Identity<T> = typeof(setmetatable(
 	{} :: {
-		_name: string,
-		_baseValue: Value,
-		_computedValue: Value,
+		_baseValue: T,
+		_computedValue: T,
 		_type: string,
-		_modifiers: { Modifier },
+		_modifiers: { Modifier<T> },
 		_min: number?,
 		_max: number?,
-		_binding: FunctionalBinding?,
+		_binding: Binding<T>?,
+		_processor: Map<T>?,
 	},
 	metatable
 ))
 
-local function constructor(name: string, baseValue: Value, binding: Binding?): Identity
-	local valueType = typeof(baseValue)
-	if valueType ~= "number" and valueType ~= "CFrame" and valueType ~= "Vector3" then
-		error(`unsupported value type "{valueType}"`, 2)
+local function sortByPriority<T>(a: Modifier<T>, b: Modifier<T>)
+	return a.pri < b.pri
+end
+
+local function constructor<T>(initialBase: T, config: Config<T>?): Identity<T>
+	local propType = typeof(initialBase)
+	if propType ~= "number" and propType ~= "CFrame" and propType ~= "Vector3" then
+		error(`unsupported prop type "{propType}"`, 2)
 	end
 
 	local self = setmetatable({}, metatable)
 
-	self._name = name
-	self._baseValue = baseValue
-	self._computedValue = baseValue
-	self._type = valueType
+	self._baseValue = initialBase
+	self._computedValue = initialBase
+	self._type = propType
 	self._modifiers = {}
 	self._min = nil
 	self._max = nil
 
-	if binding ~= nil then
-		local bindingType = typeof(binding)
+	if config then
+		self._binding = config.binding
+		self._processor = config.processor
 
-		if bindingType == "Instance" then
-			local instance = binding :: any -- Cast to allow dynamic property assign
-			self._binding = function(propName: string, propValue: Value)
-				instance[propName] = propValue
-			end
-		elseif bindingType == "function" then
-			self._binding = binding :: FunctionalBinding
-		else
-			error(`unsupported binding type "{bindingType}"`, 2)
+		if config.min or config.max then
+			self:_SetBounds(config.min, config.max)
 		end
 	end
 
 	self:_Recompute()
-
 	return self
 end
 
-function RogueProperty._Recompute(self: Identity)
-	table.sort(self._modifiers, function(a, b)
-		return a.pri < b.pri
-	end)
+function RogueProperty._Recompute<T>(self: Identity<T>)
+	table.sort(self._modifiers, sortByPriority)
 
 	local value = self._baseValue
 	for _, modifier in self._modifiers do
 		value = modifier.map(value)
 	end
 
+	if self._processor then
+		value = self._processor(value)
+	end
+
 	if self._min and self._max then
-		value = math.clamp(value :: number, self._min, self._max)
+		value = math.clamp(value :: any, self._min, self._max) :: any
 	elseif self._min then
-		value = math.max(value :: number, self._min)
+		value = math.max(value :: any, self._min) :: any
 	elseif self._max then
-		value = math.min(value :: number, self._max)
+		value = math.min(value :: any, self._max) :: any
 	end
 
 	self._computedValue = value
 
 	if self._binding then
-		self._binding(self._name, value)
+		self._binding(value)
 	end
 end
 
-function RogueProperty._AddModifier(self: Identity, id: string, priority: number, map: (value: Value) -> Value)
+function RogueProperty._AddModifier<T>(self: Identity<T>, id: string, priority: number, map: Map<T>)
 	for _, modifier in self._modifiers do
 		if modifier.id == id then
-			error(`modifier id "{id}" already used`, 2)
+			error(`modifier id "{id}" already used`, 3)
 		end
 	end
 
@@ -102,7 +105,7 @@ function RogueProperty._AddModifier(self: Identity, id: string, priority: number
 	self:_Recompute()
 end
 
-function RogueProperty._RemoveModifier(self: Identity, id: string, recompute: boolean?)
+function RogueProperty._RemoveModifier<T>(self: Identity<T>, id: string, recompute: boolean?)
 	for index, modifier in self._modifiers do
 		if modifier.id == id then
 			table.remove(self._modifiers, index)
@@ -116,65 +119,70 @@ function RogueProperty._RemoveModifier(self: Identity, id: string, recompute: bo
 	end
 end
 
-function RogueProperty.Get(self: Identity): Value
-	return self._computedValue
-end
-
-function RogueProperty.GetBaseValue(self: Identity): Value
-	return self._baseValue
-end
-
-function RogueProperty.SetBaseValue(self: Identity, value: Value)
-	self._baseValue = value
-	self:_Recompute()
-end
-
-function RogueProperty.SetBounds(self: Identity, min: number?, max: number?)
+function RogueProperty._SetBounds<T>(self: Identity<T>, min: number?, max: number?)
 	if self._type ~= "number" then
-		error("bounds are only supported for number value types", 2)
+		error("bounds are only supported for number prop types", 3)
 	end
 
 	self._min = min
 	self._max = max
+end
+
+function RogueProperty.Get<T>(self: Identity<T>): T
+	return self._computedValue
+end
+
+function RogueProperty.GetBaseValue<T>(self: Identity<T>): T
+	return self._baseValue
+end
+
+function RogueProperty.SetBaseValue<T>(self: Identity<T>, value: T)
+	self._baseValue = value
 	self:_Recompute()
 end
 
-function RogueProperty.CreateAdditiveModifier(self: Identity, id: string, amount: Value, priority: number?)
+function RogueProperty.ChangeBounds<T>(self: Identity<T>, min: number?, max: number?)
+	self:_SetBounds(min, max)
+	self:_Recompute()
+end
+
+function RogueProperty.CreateAdditiveModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	if self._type == "CFrame" then
 		error("additive modifiers are not supported with CFrame value types", 2)
 	end
 
-	self:_AddModifier(id, priority or 10, function(value: Value)
-		return value :: any + amount
+	self:_AddModifier(id, priority or 10, function(current: T): T
+		return current :: any + value
 	end)
 end
 
-function RogueProperty.CreateMultiplierModifier(self: Identity, id: string, amount: Value, priority: number?)
-	self:_AddModifier(id, priority or 20, function(value: Value)
-		return value :: any * amount
+function RogueProperty.CreateMultiplierModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
+	self:_AddModifier(id, priority or 20, function(current: T): T
+		return current :: any * value
 	end)
 end
 
-function RogueProperty.CreateOverrideModifier(self: Identity, id: string, value: Value, priority: number?)
-	self:_AddModifier(id, priority or 30, function()
+function RogueProperty.CreateOverrideModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
+	self:_AddModifier(id, priority or 30, function(): T
 		return value
 	end)
 end
 
-function RogueProperty.CreateCustomModifier(self: Identity, id: string, map: Map, priority: number?)
+function RogueProperty.CreateCustomModifier<T>(self: Identity<T>, id: string, map: Map<T>, priority: number?)
 	self:_AddModifier(id, priority or 40, map)
 end
 
-function RogueProperty.RemoveModifier(self: Identity, id: string, recompute: boolean?)
+function RogueProperty.RemoveModifier<T>(self: Identity<T>, id: string, recompute: boolean?)
 	self:_RemoveModifier(id, recompute)
 end
 
-function RogueProperty.ClearModifiers(self: Identity)
+function RogueProperty.ClearModifiers<T>(self: Identity<T>)
 	table.clear(self._modifiers)
 	self:_Recompute()
 end
 
-function RogueProperty.Destroy(self: Identity)
+--- Bindings and modifiers are cleared, could still be used until GC'd
+function RogueProperty.Destroy<T>(self: Identity<T>)
 	table.clear(self._modifiers)
 	self._binding = nil
 end
