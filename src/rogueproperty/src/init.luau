@@ -21,7 +21,6 @@ export type Identity = typeof(setmetatable(
 		_min: number?,
 		_max: number?,
 		_binding: FunctionalBinding?,
-		_isValid: boolean,
 	},
 	metatable
 ))
@@ -57,7 +56,6 @@ local function constructor(name: string, baseValue: Value, binding: Binding?): I
 		end
 	end
 
-	self._isValid = true
 	self:_Recompute()
 
 	return self
@@ -179,9 +177,8 @@ function RogueProperty.ClearModifiers(self: Identity)
 end
 
 function RogueProperty.Destroy(self: Identity)
-	self:ClearModifiers()
-	table.clear(self :: any)
-	setmetatable(self :: any, nil)
+	table.clear(self._modifiers)
+	self._binding = nil
 end
 
 return {
