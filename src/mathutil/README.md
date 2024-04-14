@@ -1,9 +1,9 @@
 # MathUtil
 
-Simple math utility library for numbers, vectors, and CFrames. Intended to extend Roblox's existing math library.
+Simple math utility library for numbers, vectors, and CFrames.
 
 ## Installation
 
 ```
-MathUtil = "hex-interactive/mathutil@1.2.0"
+MathUtil = "hex-interactive/mathutil@2.0.0"
 ```

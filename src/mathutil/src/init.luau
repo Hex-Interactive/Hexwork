@@ -2,9 +2,7 @@ type Vector = Vector2 | Vector3
 type VectorI16 = Vector2int16 | Vector3int16
 type Numerical = number | Vector | VectorI16 | CFrame
 
-local MathUtil = {
-	tau = math.pi * 2,
-}
+local MathUtil = {}
 
 function MathUtil.IsNaN(value: Numerical): boolean
 	return value ~= value
