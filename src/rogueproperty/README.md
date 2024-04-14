@@ -5,5 +5,5 @@ Represents a property with configurable and stacking modifiers. Inspired by Neve
 ## Installation
 
 ```
-RogueProperty = "hex-interactive/rogueproperty@1.0.0"
+RogueProperty = "hex-interactive/rogueproperty@2.0.0"
 ```
