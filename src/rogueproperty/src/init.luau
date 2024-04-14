@@ -9,46 +9,30 @@ type Modifier = {
 	map: Map,
 }
 
-type RogueProperty = {
-	__index: RogueProperty,
-	new: (name: string, baseValue: Value, binding: Binding?) -> RogueProperty,
-	Destroy: (self: RogueProperty) -> (),
+local RogueProperty = {}
+local metatable = { __index = RogueProperty }
+export type Identity = typeof(setmetatable(
+	{} :: {
+		_name: string,
+		_baseValue: Value,
+		_computedValue: Value,
+		_type: string,
+		_modifiers: { Modifier },
+		_min: number?,
+		_max: number?,
+		_binding: FunctionalBinding?,
+		_isValid: boolean,
+	},
+	metatable
+))
 
-	_name: string,
-	_baseValue: Value,
-	_computedValue: Value,
-	_type: string,
-	_modifiers: { Modifier },
-	_min: number?,
-	_max: number?,
-	_binding: FunctionalBinding?,
-	IsValid: boolean,
-
-	_Recompute: (self: RogueProperty) -> (),
-	_AddModifier: (self: RogueProperty, id: string, priority: number, map: (value: Value) -> Value) -> (),
-	_RemoveModifier: (self: RogueProperty, id: string, callback: (() -> ())?) -> (),
-	Get: (self: RogueProperty) -> Value,
-	GetBaseValue: (self: RogueProperty) -> Value,
-	SetBaseValue: (self: RogueProperty, value: Value) -> (),
-	SetBounds: (self: RogueProperty, min: number?, max: number?) -> (),
-	CreateAdditiveModifier: (self: RogueProperty, id: string, amount: Value, priority: number?) -> (),
-	CreateMultiplierModifier: (self: RogueProperty, id: string, amount: Value, priority: number?) -> (),
-	CreateOverrideModifier: (self: RogueProperty, id: string, value: Value, priority: number?) -> (),
-	RemoveModifier: (self: RogueProperty, id: string) -> (),
-	RemoveModifierClean: (self: RogueProperty, id: string) -> (),
-	ClearModifiers: (self: RogueProperty) -> (),
-}
-
-local RogueProperty = {} :: RogueProperty
-RogueProperty.__index = RogueProperty
-
-function RogueProperty.new(name: string, baseValue: Value, binding: Binding?): RogueProperty
-	local self = (setmetatable({}, RogueProperty) :: any) :: RogueProperty
-
+local function constructor(name: string, baseValue: Value, binding: Binding?): Identity
 	local valueType = typeof(baseValue)
 	if valueType ~= "number" and valueType ~= "CFrame" and valueType ~= "Vector3" then
-		error(`unsupported RogueProperty type "{valueType}"`)
+		error(`unsupported value type "{valueType}"`, 2)
 	end
+
+	local self = setmetatable({}, metatable)
 
 	self._name = name
 	self._baseValue = baseValue
@@ -69,19 +53,17 @@ function RogueProperty.new(name: string, baseValue: Value, binding: Binding?): R
 		elseif bindingType == "function" then
 			self._binding = binding :: FunctionalBinding
 		else
-			error("unsupported binding type")
+			error(`unsupported binding type "{bindingType}"`, 2)
 		end
-	else
-		self._binding = nil
 	end
 
+	self._isValid = true
 	self:_Recompute()
-	self.IsValid = true
 
 	return self
 end
 
-function RogueProperty:_Recompute()
+function RogueProperty._Recompute(self: Identity)
 	table.sort(self._modifiers, function(a, b)
 		return a.pri < b.pri
 	end)
@@ -106,10 +88,10 @@ function RogueProperty:_Recompute()
 	end
 end
 
-function RogueProperty:_AddModifier(id: string, priority: number, map: (value: Value) -> Value)
+function RogueProperty._AddModifier(self: Identity, id: string, priority: number, map: (value: Value) -> Value)
 	for _, modifier in self._modifiers do
 		if modifier.id == id then
-			error(`modifier id "{id}" already used`)
+			error(`modifier id "{id}" already used`, 2)
 		end
 	end
 
@@ -122,34 +104,36 @@ function RogueProperty:_AddModifier(id: string, priority: number, map: (value: V
 	self:_Recompute()
 end
 
-function RogueProperty:_RemoveModifier(id: string, callback: (() -> ())?)
+function RogueProperty._RemoveModifier(self: Identity, id: string, callback: (() -> ())?)
 	for index, modifier in self._modifiers do
 		if modifier.id == id then
 			table.remove(self._modifiers, index)
+
 			if callback then
 				callback()
 			end
+
 			return
 		end
 	end
 end
 
-function RogueProperty:Get(): Value
+function RogueProperty.Get(self: Identity): Value
 	return self._computedValue
 end
 
-function RogueProperty:GetBaseValue(): Value
+function RogueProperty.GetBaseValue(self: Identity): Value
 	return self._baseValue
 end
 
-function RogueProperty:SetBaseValue(value: Value)
+function RogueProperty.SetBaseValue(self: Identity, value: Value)
 	self._baseValue = value
 	self:_Recompute()
 end
 
-function RogueProperty:SetBounds(min: number?, max: number?)
+function RogueProperty.SetBounds(self: Identity, min: number?, max: number?)
 	if self._type ~= "number" then
-		error("bounds are only supported for numbers")
+		error("bounds are only supported for number value types", 2)
 	end
 
 	self._min = min
@@ -157,9 +141,9 @@ function RogueProperty:SetBounds(min: number?, max: number?)
 	self:_Recompute()
 end
 
-function RogueProperty:CreateAdditiveModifier(id: string, amount: Value, priority: number?)
+function RogueProperty.CreateAdditiveModifier(self: Identity, id: string, amount: Value, priority: number?)
 	if self._type == "CFrame" then
-		error("additive modifiers are not supported with CFrames")
+		error("additive modifiers are not supported with CFrame value types", 2)
 	end
 
 	self:_AddModifier(id, priority or 10, function(value: Value)
@@ -167,37 +151,39 @@ function RogueProperty:CreateAdditiveModifier(id: string, amount: Value, priorit
 	end)
 end
 
-function RogueProperty:CreateMultiplierModifier(id: string, amount: Value, priority: number?)
+function RogueProperty.CreateMultiplierModifier(self: Identity, id: string, amount: Value, priority: number?)
 	self:_AddModifier(id, priority or 20, function(value: Value)
 		return value :: any * amount
 	end)
 end
 
-function RogueProperty:CreateOverrideModifier(id: string, value: Value, priority: number?)
+function RogueProperty.CreateOverrideModifier(self: Identity, id: string, value: Value, priority: number?)
 	self:_AddModifier(id, priority or 30, function()
 		return value
 	end)
 end
 
-function RogueProperty:RemoveModifier(id: string)
+function RogueProperty.RemoveModifier(self: Identity, id: string)
 	self:_RemoveModifier(id, function()
 		self:_Recompute()
 	end)
 end
 
-function RogueProperty:RemoveModifierClean(id: string)
+function RogueProperty.RemoveModifierClean(self: Identity, id: string)
 	self:_RemoveModifier(id)
 end
 
-function RogueProperty:ClearModifiers()
+function RogueProperty.ClearModifiers(self: Identity)
 	table.clear(self._modifiers)
 	self:_Recompute()
 end
 
-function RogueProperty:Destroy()
+function RogueProperty.Destroy(self: Identity)
 	self:ClearModifiers()
-	table.clear(self)
-	setmetatable(self, nil)
+	table.clear(self :: any)
+	setmetatable(self :: any, nil)
 end
 
-return RogueProperty
+return {
+	new = constructor,
+}
