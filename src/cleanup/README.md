@@ -2,9 +2,9 @@
 
 Handle cleaning up data of all sorts. This is a good replacement for the [Debris](https://developer.roblox.com/en-us/api-reference/class/Debris) service with additional features.
 
-## ⚠️ Refactor Notice
+## ⚠️ DO NOT USE THIS FOR NEW WORK
 
-This package is in need of refactoring and updates. At the moment, it is not recommended for new work, and is not available via Wally.
+This is an old package that is not recommended for new work. It is not available via Wally.
 
 ## Example
 
