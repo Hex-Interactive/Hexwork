@@ -161,6 +161,10 @@ function RogueProperty.CreateOverrideModifier(self: Identity, id: string, value:
 	end)
 end
 
+function RogueProperty.CreateCustomModifier(self: Identity, id: string, map: Map, priority: number?)
+	self:_AddModifier(id, priority or 40, map)
+end
+
 function RogueProperty.RemoveModifier(self: Identity, id: string, recompute: boolean?)
 	self:_RemoveModifier(id, recompute)
 end
