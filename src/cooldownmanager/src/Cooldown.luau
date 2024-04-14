@@ -1,4 +1,4 @@
-local MAX = 9999
+local MAX = 9999999
 local NONE = 0
 
 type Index = any
@@ -8,30 +8,24 @@ type Entry = {
 	yield: boolean?,
 }
 
-export type Cooldown = {
-	__index: Cooldown,
-	new: () -> Cooldown,
+local Cooldown = {}
+local metatable = { __index = Cooldown }
+export type Identity = typeof(setmetatable(
+	{} :: {
+		_list: { [Index]: Entry },
+	},
+	metatable
+))
 
-	_list: { [Index]: Entry },
+local function constructor(): Identity
+	local self = setmetatable({}, metatable)
 
-	Add: (self: Cooldown, index: Index, duration: number?) -> (),
-	Update: (self: Cooldown, index: Index, duration: number?) -> (),
-	CanContinue: (self: Cooldown, index: Index) -> boolean,
-	GetTimeRemaining: (self: Cooldown, index: Index) -> number,
-	Cleanup: (self: Cooldown) -> (),
-	Clear: (self: Cooldown) -> (),
-}
-
-local Cooldown = {} :: Cooldown
-Cooldown.__index = Cooldown
-
-function Cooldown.new(): Cooldown
-	local self = (setmetatable({}, Cooldown) :: any) :: Cooldown
 	self._list = {}
+
 	return self
 end
 
-function Cooldown:Add(index: Index, duration: number?)
+function Cooldown.Add(self: Identity, index: Index, duration: number?)
 	-- assert(self._list[index] == nil, `cooldown index "{index}" already exists`)
 
 	local new = {
@@ -47,7 +41,7 @@ function Cooldown:Add(index: Index, duration: number?)
 	self._list[index] = new
 end
 
-function Cooldown:Update(index: Index, duration: number?)
+function Cooldown.Update(self: Identity, index: Index, duration: number?)
 	local cooldown = self._list[index]
 	if not cooldown then
 		self:Add(index, duration)
@@ -63,7 +57,7 @@ function Cooldown:Update(index: Index, duration: number?)
 	end
 end
 
-function Cooldown:CanContinue(index: Index): boolean
+function Cooldown.CanContinue(self: Identity, index: Index): boolean
 	local cooldown = self._list[index]
 
 	if not cooldown then
@@ -79,7 +73,7 @@ function Cooldown:CanContinue(index: Index): boolean
 	return false
 end
 
-function Cooldown:GetTimeRemaining(index: Index): number
+function Cooldown.GetTimeRemaining(self: Identity, index: Index): number
 	local cooldown = self._list[index]
 
 	if not cooldown then
@@ -93,7 +87,7 @@ function Cooldown:GetTimeRemaining(index: Index): number
 	return MAX
 end
 
-function Cooldown:Cleanup()
+function Cooldown.Cleanup(self: Identity)
 	for index in self._list do
 		if self:CanContinue(index) then
 			table.clear(self._list[index])
@@ -102,11 +96,13 @@ function Cooldown:Cleanup()
 	end
 end
 
-function Cooldown:Clear()
+function Cooldown.Clear(self: Identity)
 	for index in self._list do
 		table.clear(self._list[index])
 		self._list[index] = nil
 	end
 end
 
-return Cooldown
+return {
+	new = constructor,
+}
