@@ -19,6 +19,12 @@ type Config<T> = {
 	max: number?,
 }
 
+local SUPPORTED_TYPES = {
+	number = true,
+	CFrame = true,
+	Vector3 = true,
+}
+
 local RogueProperty = {}
 local metatable = { __index = RogueProperty }
 export type Identity<T> = typeof(setmetatable(
@@ -41,7 +47,7 @@ end
 
 local function constructor<T>(initialBase: T, config: Config<T>?): Identity<T>
 	local propType = typeof(initialBase)
-	if propType ~= "number" and propType ~= "CFrame" and propType ~= "Vector3" then
+	if not SUPPORTED_TYPES[propType] then
 		error(`unsupported prop type "{propType}"`, 2)
 	end
 
