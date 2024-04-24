@@ -205,7 +205,7 @@ end
 	Removes a modifier by id with an optional recompute, defaulting to `true`.
 ]]
 function RogueProperty.RemoveModifier<T>(self: Identity<T>, id: string, recompute: boolean?)
-	self:_RemoveModifier(id, recompute)
+	self:_RemoveModifier(id, if recompute == nil then true else recompute)
 end
 
 --[[
