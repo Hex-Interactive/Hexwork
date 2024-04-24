@@ -132,11 +132,11 @@ function RogueProperty.Get<T>(self: Identity<T>): T
 	return self._computedValue
 end
 
-function RogueProperty.GetBaseValue<T>(self: Identity<T>): T
+function RogueProperty.GetBase<T>(self: Identity<T>): T
 	return self._baseValue
 end
 
-function RogueProperty.SetBaseValue<T>(self: Identity<T>, value: T)
+function RogueProperty.SetBase<T>(self: Identity<T>, value: T)
 	self._baseValue = value
 	self:_Recompute()
 end
@@ -146,7 +146,7 @@ function RogueProperty.ChangeBounds<T>(self: Identity<T>, min: number?, max: num
 	self:_Recompute()
 end
 
-function RogueProperty.CreateAdditiveModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
+function RogueProperty.AdditiveModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	if self._type == "CFrame" then
 		error("additive modifiers are not supported with CFrame value types", 2)
 	end
@@ -156,19 +156,19 @@ function RogueProperty.CreateAdditiveModifier<T>(self: Identity<T>, id: string, 
 	end)
 end
 
-function RogueProperty.CreateMultiplierModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
+function RogueProperty.MultiplierModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	self:_AddModifier(id, priority or 20, function(current: T): T
 		return current :: any * value
 	end)
 end
 
-function RogueProperty.CreateOverrideModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
+function RogueProperty.OverrideModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	self:_AddModifier(id, priority or 30, function(): T
 		return value
 	end)
 end
 
-function RogueProperty.CreateCustomModifier<T>(self: Identity<T>, id: string, map: Map<T>, priority: number?)
+function RogueProperty.CustomModifier<T>(self: Identity<T>, id: string, map: Map<T>, priority: number?)
 	self:_AddModifier(id, priority or 40, map)
 end
 
@@ -181,10 +181,10 @@ function RogueProperty.ClearModifiers<T>(self: Identity<T>)
 	self:_Recompute()
 end
 
---- Bindings and modifiers are cleared, could still be used until GC'd
-function RogueProperty.Destroy<T>(self: Identity<T>)
-	table.clear(self._modifiers)
+--- Clears the binding then modifiers with a recompute
+function RogueProperty.Clear<T>(self: Identity<T>)
 	self._binding = nil
+	self:ClearModifiers()
 end
 
 return {
