@@ -1,3 +1,8 @@
+--[[
+	Possible future features:
+	- Support for RogueProperty based base values and bounds
+]]
+
 type Binding<T> = (value: T) -> ()
 type Map<T> = (value: T) -> T
 
@@ -128,24 +133,39 @@ function RogueProperty._SetBounds<T>(self: Identity<T>, min: number?, max: numbe
 	self._max = max
 end
 
+--[[
+	Returns the computed value.
+]]
 function RogueProperty.Get<T>(self: Identity<T>): T
 	return self._computedValue
 end
 
+--[[
+	Returns the base value.
+]]
 function RogueProperty.GetBase<T>(self: Identity<T>): T
 	return self._baseValue
 end
 
+--[[
+	Sets the base value.
+]]
 function RogueProperty.SetBase<T>(self: Identity<T>, value: T)
 	self._baseValue = value
 	self:_Recompute()
 end
 
+--[[
+	Changes the bounds of the computed value. Will error if the RogueProperty is *not* the `number` type.
+]]
 function RogueProperty.ChangeBounds<T>(self: Identity<T>, min: number?, max: number?)
 	self:_SetBounds(min, max)
 	self:_Recompute()
 end
 
+--[[
+	Creates an additive modifier with a default priority of `10`. Will error if the RogueProperty is the `CFrame` type.
+]]
 function RogueProperty.AdditiveModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	if self._type == "CFrame" then
 		error("additive modifiers are not supported with CFrame value types", 2)
@@ -156,35 +176,51 @@ function RogueProperty.AdditiveModifier<T>(self: Identity<T>, id: string, value:
 	end)
 end
 
+--[[
+	Creates a multiplier modifier with a default priority of `20`.
+]]
 function RogueProperty.MultiplierModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	self:_AddModifier(id, priority or 20, function(current: T): T
 		return current :: any * value
 	end)
 end
 
+--[[
+	Creates an override modifier with a default priority of `30`.
+]]
 function RogueProperty.OverrideModifier<T>(self: Identity<T>, id: string, value: T, priority: number?)
 	self:_AddModifier(id, priority or 30, function(): T
 		return value
 	end)
 end
 
+--[[
+	Creates a custom modifier with a default priority of `40`.
+]]
 function RogueProperty.CustomModifier<T>(self: Identity<T>, id: string, map: Map<T>, priority: number?)
 	self:_AddModifier(id, priority or 40, map)
 end
 
+--[[
+	Removes a modifier by id with an optional recompute, defaulting to `true`.
+]]
 function RogueProperty.RemoveModifier<T>(self: Identity<T>, id: string, recompute: boolean?)
 	self:_RemoveModifier(id, recompute)
 end
 
+--[[
+	Clears all the modifiers.
+]]
 function RogueProperty.ClearModifiers<T>(self: Identity<T>)
 	table.clear(self._modifiers)
 	self:_Recompute()
 end
 
---- Clears the binding then modifiers with a recompute
-function RogueProperty.Clear<T>(self: Identity<T>)
+--[[
+	Permanently clears the configured binding. Primarily useful for "destroying" the RogueProperty, although it can be GC'd regardless.
+]]
+function RogueProperty.ClearBinding<T>(self: Identity<T>)
 	self._binding = nil
-	self:ClearModifiers()
 end
 
 return {
