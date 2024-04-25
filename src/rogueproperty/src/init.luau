@@ -47,6 +47,7 @@ export type Identity<T> = typeof(setmetatable(
 		_type: string,
 		_modifiers: { Modifier<T> },
 		_animationAlphas: { [string]: number },
+		_modifiersHaveChanged: boolean,
 		_min: number?,
 		_max: number?,
 		_binding: Binding<T>?,
@@ -76,6 +77,7 @@ local function constructor<T>(initialBase: T, config: Config<T>?): Identity<T>
 	self._type = propType
 	self._modifiers = {}
 	self._animationAlphas = {}
+	self._modifiersHaveChanged = false
 	self._min = nil
 	self._max = nil
 
@@ -93,7 +95,10 @@ local function constructor<T>(initialBase: T, config: Config<T>?): Identity<T>
 end
 
 function RogueProperty._Recompute<T>(self: Identity<T>)
-	table.sort(self._modifiers, sortByPriority)
+	if self._modifiersHaveChanged then
+		table.sort(self._modifiers, sortByPriority)
+		self._modifiersHaveChanged = false
+	end
 
 	local value = self._baseValue
 	for _, modifier in self._modifiers do
@@ -125,6 +130,8 @@ function RogueProperty._AddModifier<T>(self: Identity<T>, id: string, priority: 
 			error(`modifier id "{id}" already used`, 3)
 		end
 	end
+
+	self._modifiersHaveChanged = true
 
 	table.insert(self._modifiers, {
 		id = id,
@@ -276,6 +283,8 @@ end
 function RogueProperty.RemoveModifier<T>(self: Identity<T>, id: string, recompute: boolean?)
 	for index, modifier in self._modifiers do
 		if modifier.id == id then
+			self._modifiersHaveChanged = true
+
 			self._animationAlphas[id] = nil
 			table.remove(self._modifiers, index)
 
@@ -292,6 +301,7 @@ end
 	Clears all the modifiers.
 ]]
 function RogueProperty.ClearModifiers<T>(self: Identity<T>)
+	self._modifiersHaveChanged = true
 	table.clear(self._animationAlphas)
 	table.clear(self._modifiers)
 	self:_Recompute()
