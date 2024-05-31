@@ -32,8 +32,8 @@ function MathUtil.Flatten(value: number, min: number, max: number): number
 	return math.clamp(math.floor(value), min, max)
 end
 
-function MathUtil.UnitVec(vector: Vector): Vector
-	return if vector.Magnitude > 0 then vector.Unit else vector
+function MathUtil.UnitVec<T>(vector: T & Vector): T
+	return if vector.Magnitude > 0 then vector.Unit else vector :: any
 end
 
 function MathUtil.Lerp(start: number, goal: number, alpha: number): number
