@@ -3,14 +3,16 @@
 	- Support for RogueProperty-based bounds and base values
 ]]
 
-local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 type Binding<T> = (value: T) -> ()
 type Map<T> = (value: T) -> T
 
 type Modifier<T> = {
 	id: string,
+	animationId: string?,
 	priority: number,
 	map: Map<T>,
 }
@@ -53,6 +55,8 @@ export type Identity<T> = typeof(setmetatable(
 		_computedValue: T,
 		_type: string,
 		_modifiers: { Modifier<T> },
+		_removingModifiers: { Modifier<T> },
+		_runningAnimations: { [string]: string },
 		_animationAlphas: { [string]: number },
 		_modifiersNeedSorted: boolean,
 		_min: number?,
@@ -91,6 +95,8 @@ local function constructor<T>(initialBase: T, config: Config<T>?): Identity<T>
 	self._computedValue = initialBase
 	self._type = propType
 	self._modifiers = {}
+	self._removingModifiers = {}
+	self._runningAnimations = {}
 	self._animationAlphas = {}
 	self._modifiersNeedSorted = false
 	self._min = nil
@@ -120,14 +126,28 @@ function RogueProperty._GetModifierIndexById<T>(self: Identity<T>, id: string): 
 end
 
 function RogueProperty._Recompute<T>(self: Identity<T>)
-	if self._modifiersNeedSorted then
-		table.sort(self._modifiers, sortByPriority)
-		self._modifiersNeedSorted = false
-	end
-
 	local value = self._baseValue
-	for _, modifier in self._modifiers do
-		value = modifier.map(value)
+
+	if next(self._removingModifiers) ~= nil then
+		local modifiers = table.clone(self._modifiers)
+		for _, modifier in self._removingModifiers do
+			table.insert(modifiers, modifier)
+		end
+
+		table.sort(modifiers, sortByPriority)
+
+		for _, modifier in modifiers do
+			value = modifier.map(value)
+		end
+	else
+		if self._modifiersNeedSorted then
+			table.sort(self._modifiers, sortByPriority)
+			self._modifiersNeedSorted = false
+		end
+
+		for _, modifier in self._modifiers do
+			value = modifier.map(value)
+		end
 	end
 
 	if self._processor then
@@ -149,7 +169,14 @@ function RogueProperty._Recompute<T>(self: Identity<T>)
 	end
 end
 
-function RogueProperty._AddModifier<T>(self: Identity<T>, id: string, priority: number, recompute: boolean, map: Map<T>)
+function RogueProperty._AddModifier<T>(
+	self: Identity<T>,
+	id: string,
+	animationId: string?,
+	priority: number,
+	recompute: boolean,
+	map: Map<T>
+)
 	for _, modifier in self._modifiers do
 		if modifier.id == id then
 			error(`modifier id "{id}" already used`, 3)
@@ -160,6 +187,7 @@ function RogueProperty._AddModifier<T>(self: Identity<T>, id: string, priority: 
 
 	table.insert(self._modifiers, {
 		id = id,
+		animationId = animationId,
 		priority = priority,
 		map = map,
 	})
@@ -169,23 +197,30 @@ function RogueProperty._AddModifier<T>(self: Identity<T>, id: string, priority: 
 	end
 end
 
-function RogueProperty._RemoveModifierByIndex<T>(self: Identity<T>, index: number, id: string, recompute: boolean)
-	self._modifiersNeedSorted = true
+function RogueProperty._RemoveModifierById<T>(self: Identity<T>, id: string, recompute: boolean): Modifier<T>?
+	for index, modifier in self._modifiers do
+		if modifier.id == id then
+			self._modifiersNeedSorted = true
 
-	self._animationAlphas[id] = nil
-	table.remove(self._modifiers, index)
+			table.remove(self._modifiers, index)
 
-	if recompute then
-		self:_Recompute()
+			if recompute then
+				self:_Recompute()
+			end
+
+			return modifier
+		end
 	end
+
+	return nil
 end
 
 function RogueProperty._AnimateModifier<T>(
 	self: Identity<T>,
-	id: string,
+	animationId: string,
 	info: Animatable,
 	alphaGoal: number,
-	onFinished: ((canceled: boolean) -> ())?
+	cleanup: (() -> ())?
 )
 	local duration = info.duration
 	if not duration then
@@ -193,41 +228,50 @@ function RogueProperty._AnimateModifier<T>(
 		return
 	end
 
+	local thisId = HttpService:GenerateGUID(false)
+	self._runningAnimations[animationId] = thisId
+
 	local easingStyle = info.easingStyle or Enum.EasingStyle.Linear
 	local easingDirection = info.easingDirection or Enum.EasingDirection.Out
 	local timeElapsed = 0
 
-	self._animationAlphas[id] = math.abs(alphaGoal - 1)
+	local starting = math.abs(alphaGoal - 1)
+	self._animationAlphas[animationId] = starting
 
 	local conn: RBXScriptConnection? = nil
-	local function finish(canceled: boolean)
+	local function finish(success: boolean)
+		if success then
+			self._runningAnimations[animationId] = nil
+			self._animationAlphas[animationId] = alphaGoal
+			self:_Recompute()
+		end
+
 		if conn then
 			conn:Disconnect()
 			conn = nil
 		end
 
-		if onFinished then
-			onFinished(canceled)
+		if cleanup then
+			self._animationAlphas[animationId] = nil
+			cleanup()
 		end
 	end
 
-	conn = RunService.Stepped:Connect(function(_, dt: number)
-		if not self._animationAlphas[id] then
-			finish(true)
-			return
-		end
-
-		timeElapsed += dt
-
-		if timeElapsed >= duration then
-			self._animationAlphas[id] = alphaGoal
-			self:_Recompute()
+	conn = RunService.PostSimulation:Connect(function(deltaTime: number)
+		if self._runningAnimations[animationId] ~= thisId then
 			finish(false)
 			return
 		end
 
-		local timeAlpha = math.abs(timeElapsed / duration - alphaGoal)
-		self._animationAlphas[id] = TweenService:GetValue(timeAlpha, easingStyle, easingDirection)
+		timeElapsed += deltaTime
+
+		if timeElapsed >= duration then
+			finish(true)
+			return
+		end
+
+		local tweenAlpha = TweenService:GetValue(timeElapsed / duration, easingStyle, easingDirection)
+		self._animationAlphas[animationId] = math.abs(tweenAlpha - starting)
 		self:_Recompute()
 	end)
 end
@@ -283,17 +327,18 @@ function RogueProperty.AdditiveModifier<T>(self: Identity<T>, id: string, value:
 
 	local recompute = getRecompute(info)
 	if not info or not info.duration then
-		self:_AddModifier(id, getPriority(info, 10), recompute, function(current)
+		self:_AddModifier(id, nil, getPriority(info, 10), recompute, function(current)
 			return (current :: any) + value
 		end)
 
 		return
 	end
 
-	self:_AddModifier(id, getPriority(info, 10), recompute, function(current)
-		return (current :: any) + (value :: any) * (self._animationAlphas[id] or 1)
+	local animationId = HttpService:GenerateGUID(false)
+	self:_AddModifier(id, animationId, getPriority(info, 10), recompute, function(current)
+		return (current :: any) + (value :: any) * (self._animationAlphas[animationId] or 1)
 	end)
-	self:_AnimateModifier(id, info, 1)
+	self:_AnimateModifier(animationId, info, 1)
 end
 
 --[[
@@ -309,24 +354,25 @@ function RogueProperty.MultiplierModifier<T>(
 )
 	local recompute = getRecompute(info)
 	if not info or not info.duration then
-		self:_AddModifier(id, getPriority(info, 20), recompute, function(current)
+		self:_AddModifier(id, nil, getPriority(info, 20), recompute, function(current)
 			return (current :: any) + value
 		end)
 
 		return
 	end
 
-	self:_AddModifier(id, getPriority(info, 20), recompute, function(current)
-		return (current :: any) * (value :: any) * (self._animationAlphas[id] or 1)
+	local animationId = HttpService:GenerateGUID(false)
+	self:_AddModifier(id, animationId, getPriority(info, 20), recompute, function(current)
+		return (current :: any) + (value :: any) * (self._animationAlphas[animationId] or 1)
 	end)
-	self:_AnimateModifier(id, info, 1)
+	self:_AnimateModifier(animationId, info, 1)
 end
 
 --[[
 	Creates an override modifier with a default priority of `30`.
 ]]
 function RogueProperty.OverrideModifier<T>(self: Identity<T>, id: string, value: T, info: ModifierCreationInfo?)
-	self:_AddModifier(id, getPriority(info, 30), getRecompute(info), function()
+	self:_AddModifier(id, nil, getPriority(info, 30), getRecompute(info), function()
 		return value
 	end)
 end
@@ -335,7 +381,7 @@ end
 	Creates a custom modifier with a default priority of `40`.
 ]]
 function RogueProperty.CustomModifier<T>(self: Identity<T>, id: string, map: Map<T>, info: ModifierCreationInfo?)
-	self:_AddModifier(id, getPriority(info, 40), getRecompute(info), map)
+	self:_AddModifier(id, nil, getPriority(info, 40), getRecompute(info), map)
 end
 
 --[[
@@ -345,31 +391,23 @@ end
 	This only applies for additive and multiplier modifiers, others will not change during the animation time.
 ]]
 function RogueProperty.RemoveModifier<T>(self: Identity<T>, id: string, info: ModifierDestructionInfo?)
-	local index = self:_GetModifierIndexById(id)
-	if not index then
+	local removedModifier = self:_RemoveModifierById(id, getRecompute(info))
+	if not removedModifier or not removedModifier.animationId or not info or not info.duration then
 		return
 	end
 
-	local recompute = getRecompute(info)
+	local animationId = removedModifier.animationId
+	local removingModifiers = self._removingModifiers
+	table.insert(removingModifiers, removedModifier)
 
-	if info and info.duration then
-		self:_AnimateModifier(id, info, 0, function(canceled: boolean)
-			if canceled then
+	self:_AnimateModifier(animationId, info, 0, function()
+		for index, modifier in removingModifiers do
+			if modifier == removedModifier then
+				table.remove(removingModifiers, index)
 				return
 			end
-
-			local updatedIndex = self:_GetModifierIndexById(id)
-			if not updatedIndex then
-				return
-			end
-
-			self:_RemoveModifierByIndex(updatedIndex, id, recompute)
-		end)
-
-		return
-	end
-
-	self:_RemoveModifierByIndex(index, id, recompute)
+		end
+	end)
 end
 
 --[[
@@ -377,7 +415,6 @@ end
 ]]
 function RogueProperty.ClearModifiers<T>(self: Identity<T>)
 	self._modifiersNeedSorted = false
-	table.clear(self._animationAlphas)
 	table.clear(self._modifiers)
 	self:_Recompute()
 end
