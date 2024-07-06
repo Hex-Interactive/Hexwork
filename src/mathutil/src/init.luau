@@ -49,4 +49,9 @@ function MathUtil.Map(value: number, min0: number, max0: number, min1: number, m
 	return (value - min0) * (max1 - min1) / (max0 - min0) + min1
 end
 
+--- In degrees
+function MathUtil.AngleBetween<T>(vectorA: T & Vector, vectorB: T & Vector): number
+	return math.deg(math.acos(MathUtil.UnitVec(vectorA :: any):Dot(vectorB)))
+end
+
 return MathUtil
