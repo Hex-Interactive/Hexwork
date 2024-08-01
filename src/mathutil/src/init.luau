@@ -51,7 +51,13 @@ end
 
 --- In degrees
 function MathUtil.AngleBetween<T>(vectorA: T & Vector, vectorB: T & Vector): number
-	return math.deg(math.acos(MathUtil.UnitVec(vectorA :: any):Dot(vectorB)))
+	local angle = math.acos(MathUtil.UnitVec(vectorA :: any):Dot(vectorB))
+
+	if angle ~= angle then
+		return 0
+	else
+		return math.deg(angle)
+	end
 end
 
 return MathUtil
